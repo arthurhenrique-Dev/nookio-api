@@ -3,10 +3,12 @@ package com.henrique.nookio_api.modules.avaliations.services;
 import com.henrique.nookio_api.modules.avaliations.dto.CreateAvaliationDto;
 import com.henrique.nookio_api.modules.avaliations.models.Avaliation;
 import com.henrique.nookio_api.modules.avaliations.repository.AvaliationRepository;
+import com.henrique.nookio_api.modules.properties.services.cache.CatalogCacheInvalidator;
 import com.henrique.nookio_api.modules.schedules.models.Schedule;
 import com.henrique.nookio_api.modules.schedules.models.ScheduleStatus;
 import com.henrique.nookio_api.modules.schedules.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,8 +22,10 @@ public class AvaliationsService {
 
     private final AvaliationRepository avaliationRepository;
     private final ScheduleRepository scheduleRepository;
+    private final CatalogCacheInvalidator catalogCacheInvalidator;
 
     @Transactional
+    @CacheEvict(value = "avaliations", allEntries = true)
     public Avaliation avaliateSchedule(Integer scheduleId, CreateAvaliationDto dto) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new IllegalArgumentException("Reserva não encontrada."));
@@ -43,6 +47,9 @@ public class AvaliationsService {
         Avaliation savedAvaliation = avaliationRepository.save(avaliation);
         schedule.setAvaliation(savedAvaliation);
         scheduleRepository.save(schedule);
+
+        if (schedule.getPropertyId() != null)
+            catalogCacheInvalidator.invalidateAffectedCaches(schedule.getPropertyId());
 
         return savedAvaliation;
     }
