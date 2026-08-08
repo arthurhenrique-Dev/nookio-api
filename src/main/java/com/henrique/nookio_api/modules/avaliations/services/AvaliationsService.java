@@ -7,10 +7,12 @@ import com.henrique.nookio_api.modules.schedules.models.Schedule;
 import com.henrique.nookio_api.modules.schedules.models.ScheduleStatus;
 import com.henrique.nookio_api.modules.schedules.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,13 +26,11 @@ public class AvaliationsService {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new IllegalArgumentException("Reserva não encontrada."));
 
-        if (schedule.getStatus() != ScheduleStatus.COMPLETED) {
+        if (schedule.getStatus() != ScheduleStatus.COMPLETED)
             throw new IllegalStateException("Apenas estadias concluídas (com check-out feito) podem ser avaliadas.");
-        }
 
-        if (schedule.getAvaliation() != null) {
+        if (schedule.getAvaliation() != null)
             throw new IllegalStateException("Esta reserva já possui uma avaliação registrada.");
-        }
 
         Avaliation avaliation = Avaliation.builder()
                 .avaliatorId(schedule.getGuestId().longValue())
@@ -47,7 +47,9 @@ public class AvaliationsService {
         return savedAvaliation;
     }
 
-    public List<Avaliation> findByPropertyId(Long propertyId) {
-        return avaliationRepository.findAllByPropertyId(propertyId);
+    @Cacheable(value = "avaliations", key = "#propertyId + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    public Slice<Avaliation> findByPropertyId(Long propertyId, Pageable pageable) {
+        if (pageable == null) pageable = PageRequest.of(0, 10);
+        return avaliationRepository.findAllByPropertyIdOrderByCreatedAtDesc(propertyId, pageable);
     }
 }
