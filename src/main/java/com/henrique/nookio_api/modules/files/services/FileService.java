@@ -1,6 +1,7 @@
 package com.henrique.nookio_api.modules.files.services;
 
 import com.henrique.nookio_api.core.exceptions.FileUploadException;
+import com.henrique.nookio_api.core.idempotency.annotation.Idempotency;
 import com.henrique.nookio_api.infraestructure.bucket.ports.BucketPort;
 import com.henrique.nookio_api.modules.files.models.File;
 import com.henrique.nookio_api.modules.files.repository.FileRepository;
@@ -23,6 +24,7 @@ public class FileService {
     private final BucketPort bucketPort;
 
     @Transactional
+    @Idempotency(desarmPostOperation = true)
     public List<File> upload(List<MultipartFile> files) {
         String debugId = LogContext.getDebugId();
         if (files == null || files.isEmpty()) throw new FileUploadException("Nenhum arquivo enviado para upload.");

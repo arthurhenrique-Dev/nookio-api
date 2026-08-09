@@ -33,6 +33,9 @@ public class VwPropertiesCatalog {
     @Column(name = "owner_name", nullable = false)
     private String ownerName;
 
+    @Column(name = "owner_profile_photo_url")
+    private String ownerProfilePhotoUrl;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "information_id")
     private PropertyInformation information;
