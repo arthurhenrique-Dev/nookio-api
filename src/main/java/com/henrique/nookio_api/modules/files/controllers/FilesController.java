@@ -2,6 +2,7 @@ package com.henrique.nookio_api.modules.files.controllers;
 
 import com.henrique.nookio_api.core.audit_logs.annotation.AuditLog;
 import com.henrique.nookio_api.core.handler.ApiErrorResponse;
+import com.henrique.nookio_api.core.idempotency.annotation.Idempotency;
 import com.henrique.nookio_api.modules.files.models.File;
 import com.henrique.nookio_api.modules.files.services.FileService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +30,7 @@ public class FilesController {
 
     @AuditLog(resource = "FILES", operation = "UPLOAD")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Idempotency(desarmPostOperation = true)
     @Operation(summary = "Fazer upload de arquivos", description = "Envia uma ou mais imagens/arquivos para o bucket de armazenamento.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Upload concluído com sucesso."),

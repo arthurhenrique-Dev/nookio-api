@@ -9,5 +9,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Idempotency {
 
-    boolean desarmPostOperation();
+    boolean desarmPostOperation() default false;
 }
