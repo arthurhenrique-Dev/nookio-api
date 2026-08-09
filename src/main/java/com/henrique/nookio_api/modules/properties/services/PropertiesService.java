@@ -1,5 +1,7 @@
 package com.henrique.nookio_api.modules.properties.services;
 
+import com.henrique.nookio_api.core.exceptions.ForbiddenOperationException;
+import com.henrique.nookio_api.core.exceptions.ResourceNotFoundException;
 import com.henrique.nookio_api.modules.properties.dto.CatalogationParameters;
 import com.henrique.nookio_api.modules.properties.dto.InputCatalog;
 import com.henrique.nookio_api.modules.properties.dto.RegisterPropertyDto;
@@ -16,6 +18,7 @@ import com.henrique.nookio_api.modules.properties.services.cache.CatalogCacheInv
 import com.henrique.nookio_api.modules.properties.services.cache.canonicalizer.CatalogSearchCanonicalizer;
 import com.henrique.nookio_api.modules.properties.services.facade.CreatePropertyFacade;
 import com.henrique.nookio_api.modules.properties.services.orchestror.UpdatePropertyOrchestror;
+import com.henrique.nookio_api.shared.logging.LogContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,12 +45,17 @@ public class PropertiesService {
     private final ApplicationEventPublisher eventPublisher;
 
     public Slice<VwPropertiesCatalog> getCatalog(InputCatalog input) {
+        String debugId = LogContext.getDebugId();
         String canonicalParams = catalogSearchCanonicalizer.serialize(input);
         eventPublisher.publishEvent(new CatalogSearchEvent(canonicalParams, input));
 
         Slice<VwPropertiesCatalog> cached = catalogCacheService.get(input);
-        if (cached != null) return cached;
+        if (cached != null) {
+            log.info("[CATALOG_CACHE_HIT] debugId={} canonicalParams={}", debugId, canonicalParams);
+            return cached;
+        }
 
+        log.info("[CATALOG_CACHE_MISS] debugId={} queryDb=true", debugId);
         CatalogationParameters parameters = catalogMapper.toParameters(input);
         Specification<VwPropertiesCatalog> spec = VwPropertiesCatalogSpecs.filteredCatalog(parameters);
 
@@ -78,27 +86,39 @@ public class PropertiesService {
         catalogCacheService.putWarmup(input, result);
     }
 
-
-
-    public void createProperty(RegisterPropertyDto dto){
+    public void createProperty(RegisterPropertyDto dto) {
+        String debugId = LogContext.getDebugId();
+        log.info("[CREATE_PROPERTY] debugId={} title={}", debugId, dto.title());
         Property created = createFacade.execute(dto);
-        if (created != null && created.getId() != null) selectiveCacheInvalidator.invalidateAffectedCaches(created.getId());
+        if (created != null && created.getId() != null) {
+            selectiveCacheInvalidator.invalidateAffectedCaches(created.getId());
+        }
     }
 
-    public void updateProperty(UpdatePropertyDto dto){
+    public void updateProperty(UpdatePropertyDto dto) {
+        String debugId = LogContext.getDebugId();
+        log.info("[UPDATE_PROPERTY] debugId={} propertyId={}", debugId, dto.propertyId());
         updateOrchestror.execute(dto);
-        if (dto != null && dto.propertyId() != null) selectiveCacheInvalidator.invalidateAffectedCaches(dto.propertyId());
+        if (dto != null && dto.propertyId() != null) {
+            selectiveCacheInvalidator.invalidateAffectedCaches(dto.propertyId());
+        }
     }
 
     @Transactional
-    public void deleteProperty(Integer propertyId, Integer ownerId){
+    public void deleteProperty(Integer propertyId, Integer ownerId) {
+        String debugId = LogContext.getDebugId();
         Property property = propertiesRepository.findById(propertyId)
-                .orElseThrow(() -> new IllegalArgumentException("Property not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Property", propertyId));
 
-        if (!property.getOwnerId().equals(ownerId)) throw new IllegalArgumentException("Only the property owner can do it!");
+        if (!property.getOwnerId().equals(ownerId)) {
+            log.warn("[DELETE_PROPERTY_FORBIDDEN] debugId={} propertyId={} ownerId={}", debugId, propertyId, ownerId);
+            throw new ForbiddenOperationException("OWNER_MISMATCH", "Apenas o proprietário do imóvel pode realizar esta exclusão.");
+        }
 
         property.setActive(false);
         propertiesRepository.save(property);
+        log.info("[DELETE_PROPERTY_SUCCESS] debugId={} propertyId={}", debugId, propertyId);
+
         selectiveCacheInvalidator.invalidateAffectedCaches(propertyId);
     }
 }
