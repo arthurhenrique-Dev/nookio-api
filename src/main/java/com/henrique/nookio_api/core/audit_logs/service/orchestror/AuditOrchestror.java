@@ -21,7 +21,15 @@ public class AuditOrchestror {
     private final ApplicationStress stress;
 
     public void process(AuditLogData data) {
-        if (!stress.isStressed()) directDispatch.handle(data);
-        dbDispatch.handle(data);
+        if (stress.isStressed()){
+            dbDispatch.handle(data);
+            return;
+        }
+        try {
+            directDispatch.handle(data);
+        } catch(Exception e){
+            log.warn("Falha no envio HTTP do audit log. Salvando localmente via fallback... Erro: {}", e.getMessage());
+            dbDispatch.handle(data);
+        }
     }
 }
