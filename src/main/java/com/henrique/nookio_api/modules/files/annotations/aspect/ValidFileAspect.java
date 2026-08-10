@@ -5,19 +5,15 @@ import com.henrique.nookio_api.modules.files.annotations.facade.ValidateFilesFac
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
-import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-@Aspect
 @Component
 @RequiredArgsConstructor
-public class ValidFileAspect
-        implements ConstraintValidator<ValidFile, MultipartFile> {
+public class ValidFileAspect implements ConstraintValidator<ValidFile, MultipartFile> {
 
     private String[] allowedTypes;
     private final ValidateFilesFacade facade;
-
 
     @Override
     public void initialize(ValidFile constraintAnnotation) {
@@ -26,6 +22,7 @@ public class ValidFileAspect
 
     @Override
     public boolean isValid(MultipartFile value, ConstraintValidatorContext context) {
+        if (value == null || value.isEmpty()) return true;
         return facade.facade(value, allowedTypes);
     }
 }

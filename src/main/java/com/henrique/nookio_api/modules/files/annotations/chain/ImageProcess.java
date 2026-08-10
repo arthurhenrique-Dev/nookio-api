@@ -1,49 +1,34 @@
 package com.henrique.nookio_api.modules.files.annotations.chain;
 
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.rekognition.RekognitionClient;
 import software.amazon.awssdk.services.rekognition.model.DetectModerationLabelsRequest;
 import software.amazon.awssdk.services.rekognition.model.DetectModerationLabelsResponse;
-import software.amazon.awssdk.services.rekognition.model.Image;
 
+import java.io.InputStream;
+
+@Slf4j
 @NoArgsConstructor
-public class ImageProcess extends ValidateProcess{
-
-    private static RekognitionClient rekognitionClient = RekognitionClient.create();
+public class ImageProcess extends ValidateProcess {
 
     @Override
     protected boolean validate(MultipartFile file) {
-        try {
-            DetectModerationLabelsRequest request =
-                    DetectModerationLabelsRequest.builder()
-                            .image(
-                                    Image.builder()
-                                            .bytes(
-                                                    SdkBytes.fromInputStream(
-                                                            file.getInputStream()
-                                                    )
-                                            )
-                                            .build()
-                            )
-                            .minConfidence(80F)
-                            .build();
+        try (InputStream is = file.getInputStream()) {
+            RekognitionClient rekognitionClient = RekognitionClient.create();
+            SdkBytes sdkBytes = SdkBytes.fromInputStream(is);
+            DetectModerationLabelsRequest request = DetectModerationLabelsRequest.builder()
+                    .image(img -> img.bytes(sdkBytes))
+                    .minConfidence(80F)
+                    .build();
 
-
-            DetectModerationLabelsResponse response =
-                    rekognitionClient.detectModerationLabels(request);
-
-
-            return response.moderationLabels()
-                    .isEmpty();
-
-
+            DetectModerationLabelsResponse response = rekognitionClient.detectModerationLabels(request);
+            return response.moderationLabels().isEmpty();
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "Erro ao analisar imagem",
-                    e
-            );
+            log.warn("Falha ao analisar imagem via AWS Rekognition: {}", e.getMessage());
+            return true;
         }
     }
 }

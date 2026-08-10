@@ -12,12 +12,15 @@ public class ValidateFilesFacade {
 
     private static final String JPEG = "image/jpeg";
     private static final String PNG = "image/png";
-    private static final String PDF = "application/pdf";
 
-    public boolean facade(MultipartFile file, String[] allowed_types){
-        FileProcess begin = new FileProcess(allowed_types);
-        if (file.getContentType().equals(JPEG) || file.getContentType().equals(PNG)) begin.setNext(new ImageProcess());
-        if (file.getContentType().equals(PDF)) begin.setNext(null);
+    public boolean facade(MultipartFile file, String[] allowedTypes) {
+        if (file == null || file.isEmpty()) return true;
+
+        FileProcess begin = new FileProcess(allowedTypes);
+        String contentType = file.getContentType();
+        if (contentType != null && (contentType.equalsIgnoreCase(JPEG) || contentType.equalsIgnoreCase(PNG))) {
+            begin.setNext(new ImageProcess());
+        }
         return begin.handle(file);
     }
 }
