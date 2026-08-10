@@ -26,12 +26,6 @@ server:
 
 clients:
   api-id: ${API_ID}
-  analytics:
-    url: ${ANALYTICS_SERVICE_URL}${BASE_ENDPOINT}
-    transport: ${ANALYTICS_TRANSPORT:feign}
-  payments:
-    url: ${PAYMENTS_SERVICE_URL}${BASE_ENDPOINT}
-    transport: ${PAYMENTS_TRANSPORT:http}
 eureka:
   client:
     register-with-eureka: true
