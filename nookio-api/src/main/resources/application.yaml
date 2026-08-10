@@ -19,7 +19,7 @@ spring:
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
 server:
-  port: 8081
+  port: ${PORT}
   threads:
     virtual:
       enabled: true
@@ -31,4 +31,4 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_URI}
