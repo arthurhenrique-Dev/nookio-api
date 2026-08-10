@@ -16,6 +16,6 @@ public interface AuditLogFallbackRepository extends JpaRepository<AuditLogEntity
 
     @Modifying
     @Transactional
-    @Query(value = "TRUNCATE TABLE local_logs", nativeQuery = true)
+    @Query(value = "TRUNCATE TABLE management.local_logs", nativeQuery = true)
     void truncate();
 }
