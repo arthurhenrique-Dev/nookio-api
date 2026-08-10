@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: NOOKIO-PUBLISHER
+  datasource:
+    url: jdbc:sqlite:publisher.db
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+server:
+  port: 8083
+
+clients:
+  api-id: ${API_ID:2}
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
+
+aws:
+  ses:
+    region: ${AWS_REGION}

@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: NOOKIO-PAYMENTS-API
+  datasource:
+    url: jdbc:sqlite:payments.db
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+server:
+  port: 8082
+
+clients:
+  api-id: ${API_ID:3}
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
+
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY:sk_test_51MockStripeKeyForDevNookioProject00000000000000000000000000000000000000}
