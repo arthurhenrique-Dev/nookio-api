@@ -20,16 +20,16 @@ public class Avaliation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Column(name = "avaliator_id", nullable = false)
-    private Long avaliatorId;
+    private Integer avaliatorId;
 
     @Column(name = "property_id", nullable = false)
-    private Long propertyId;
+    private Integer propertyId;
 
     @Column(name = "owner_id", nullable = false)
-    private Long ownerId;
+    private Integer ownerId;
 
     @Column(name = "rating", nullable = false, precision = 3, scale = 2)
     private BigDecimal rating;

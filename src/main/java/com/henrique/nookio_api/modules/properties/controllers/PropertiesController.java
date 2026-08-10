@@ -91,7 +91,7 @@ public class PropertiesController {
             @ApiResponse(responseCode = "500", description = "Erro interno no servidor.",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
-    public ResponseEntity<Slice<Avaliation>> getPropertyAvaliations(@PathVariable Long id, Pageable pageable) {
+    public ResponseEntity<Slice<Avaliation>> getPropertyAvaliations(@PathVariable Integer id, Pageable pageable) {
         Slice<Avaliation> avaliations = avaliationsService.findByPropertyId(id, pageable);
         return ResponseEntity.ok(avaliations);
     }

@@ -7,6 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AvaliationRepository extends JpaRepository<Avaliation, Long> {
-    Slice<Avaliation> findAllByPropertyIdOrderByCreatedAtDesc(Long propertyId, Pageable pageable);
+public interface AvaliationRepository extends JpaRepository<Avaliation, Integer> {
+    Slice<Avaliation> findAllByPropertyIdOrderByCreatedAtDesc(Integer propertyId, Pageable pageable);
 }
