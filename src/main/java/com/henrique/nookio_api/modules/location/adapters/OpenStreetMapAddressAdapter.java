@@ -4,67 +4,42 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.henrique.nookio_api.modules.location.dto.LocationInput;
 import com.henrique.nookio_api.modules.location.models.LocationInformation;
 import com.henrique.nookio_api.modules.location.ports.AddressClient;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class OpenStreetMapAddressAdapter implements AddressClient {
 
-    private final RestClient restClient;
-
-    public OpenStreetMapAddressAdapter() {
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout((int) Duration.ofSeconds(5).toMillis());
-        requestFactory.setReadTimeout((int) Duration.ofSeconds(5).toMillis());
-
-        this.restClient = RestClient.builder()
-                .baseUrl("https://nominatim.openstreetmap.org")
-                .requestFactory(requestFactory)
-                .defaultHeader(HttpHeaders.USER_AGENT, "NookioApi/1.0 (contact@nookio.com)")
-                .defaultHeader(HttpHeaders.ACCEPT, "application/json")
-                .build();
-    }
+    private final NominatimFeignClient nominatimFeignClient;
 
     @Override
     public LocationInformation clientAddress(LocationInput input) {
-        if (input == null) {
-            return LocationInformation.builder().build();
-        }
+        if (input == null) return LocationInformation.builder().build();
 
         try {
             String query = buildQueryString(input);
-            log.info("Buscando localização no OpenStreetMap Nominatim para a query: {}", query);
+            log.info("Buscando localização no OpenStreetMap Nominatim via Feign para a query: {}", query);
 
-            String uri = UriComponentsBuilder.fromPath("/search")
-                    .queryParam("q", query)
-                    .queryParam("format", "json")
-                    .queryParam("addressdetails", "1")
-                    .queryParam("limit", "1")
-                    .build()
-                    .toUriString();
+            List<NominatimResponseDto> results = nominatimFeignClient.search(
+                    query,
+                    "json",
+                    "1",
+                    "1",
+                    "NookioApi/1.0 (contact@nookio.com)",
+                    "application/json"
+            );
 
-            NominatimResponseDto[] results = restClient.get()
-                    .uri(uri)
-                    .retrieve()
-                    .body(NominatimResponseDto[].class);
-
-            if (results != null && results.length > 0) {
-                return mapToLocationInformation(results[0], input);
-            } else {
-                log.warn("Nenhum resultado encontrado no OpenStreetMap para o endereço fornecido. Usando dados informados no input.");
-            }
+            if (results != null && !results.isEmpty()) return mapToLocationInformation(results.get(0), input);
+            log.warn("Nenhum resultado encontrado no OpenStreetMap para o endereço fornecido. Usando dados informados no input.");
         } catch (Exception e) {
-            log.error("Erro ao consultar OpenStreetMap Nominatim: {}", e.getMessage(), e);
+            log.error("Erro ao consultar OpenStreetMap Nominatim via Feign: {}", e.getMessage(), e);
         }
 
         return fallbackLocationInformation(input);
@@ -118,9 +93,7 @@ public class OpenStreetMapAddressAdapter implements AddressClient {
 
     private String getFirstNonNull(String... candidates) {
         for (String candidate : candidates) {
-            if (candidate != null && !candidate.isBlank()) {
-                return candidate;
-            }
+            if (candidate != null && !candidate.isBlank()) return candidate;
         }
         return null;
     }
