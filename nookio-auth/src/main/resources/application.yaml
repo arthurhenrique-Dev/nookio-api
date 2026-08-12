@@ -1,3 +1,10 @@
 spring:
   application:
     name: nookio-auth
+  profiles:
+    active: dev
+  config:
+    import: "configserver:http://localhost:8888"
+
+clients:
+  api-id: nookio-auth

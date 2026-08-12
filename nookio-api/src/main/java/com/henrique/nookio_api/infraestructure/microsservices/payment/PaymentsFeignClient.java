@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "NOOKIO-PAYMENTS-API")
+@FeignClient(name = "nookio-payments")
 public interface PaymentsFeignClient {
 
     @PostMapping("/payments")

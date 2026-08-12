@@ -1,13 +1,10 @@
-server:
-  port: 8082
-
 spring:
   application:
     name: nookio-analytics-api
+  profiles:
+    active: dev
+  config:
+    import: "configserver:http://localhost:8888"
 
-eureka:
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
+clients:
+  api-id: nookio-analytics-api

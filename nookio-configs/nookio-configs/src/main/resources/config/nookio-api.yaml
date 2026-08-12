@@ -1,0 +1,23 @@
+spring:
+  cloud:
+    openfeign:
+      client:
+        config:
+          nominatimClient:
+            connectTimeout: 2000
+            readTimeout: 3000
+  datasource:
+    url: jdbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE}_${ENVIRONMENT}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+
+server:
+  port: ${PORT}
+  threads:
+    virtual:
+      enabled: true
