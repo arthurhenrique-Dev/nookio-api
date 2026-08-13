@@ -13,11 +13,60 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
 
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import feign.FeignException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeoutException;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(CallNotPermittedException.class)
+    public ResponseEntity<ApiErrorResponse> handleCallNotPermitted(CallNotPermittedException ex, HttpServletRequest request) {
+        String debugId = LogContext.getDebugId();
+        log.warn("[CIRCUIT_OPEN_503] debugId={} path={} circuitBreaker={}", debugId, request.getRequestURI(), ex.getCausingCircuitBreakerName());
+        ApiErrorResponse body = ApiErrorResponse.of(
+                HttpStatus.SERVICE_UNAVAILABLE.value(),
+                "SERVICE_UNAVAILABLE",
+                "O serviço solicitado está temporariamente indisponível (Circuit Breaker Aberto). Tente novamente em instantes.",
+                request.getRequestURI(),
+                debugId
+        );
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
+    }
+
+    @ExceptionHandler({TimeoutException.class, SocketTimeoutException.class, FeignException.GatewayTimeout.class})
+    public ResponseEntity<ApiErrorResponse> handleTimeoutException(Exception ex, HttpServletRequest request) {
+        String debugId = LogContext.getDebugId();
+        log.warn("[TIMEOUT_504] debugId={} path={} error={}", debugId, request.getRequestURI(), ex.getMessage());
+        ApiErrorResponse body = ApiErrorResponse.of(
+                HttpStatus.GATEWAY_TIMEOUT.value(),
+                "GATEWAY_TIMEOUT",
+                "O tempo limite de resposta do serviço de destino foi excedido.",
+                request.getRequestURI(),
+                debugId
+        );
+        return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body(body);
+    }
+
+    @ExceptionHandler({ConnectException.class, FeignException.BadGateway.class, FeignException.FeignServerException.class})
+    public ResponseEntity<ApiErrorResponse> handleBadGatewayException(Exception ex, HttpServletRequest request) {
+        String debugId = LogContext.getDebugId();
+        log.warn("[BAD_GATEWAY_502] debugId={} path={} error={}", debugId, request.getRequestURI(), ex.getMessage());
+        ApiErrorResponse body = ApiErrorResponse.of(
+                HttpStatus.BAD_GATEWAY.value(),
+                "BAD_GATEWAY",
+                "Falha de comunicação ou erro no serviço de destino.",
+                request.getRequestURI(),
+                debugId
+        );
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(body);
+    }
+
     @ExceptionHandler(NookioException.class)
+
     public ResponseEntity<ApiErrorResponse> handleNookioException(NookioException ex, HttpServletRequest request) {
         String debugId = LogContext.getDebugId();
         log.warn("[EXCEPTION_HANDLED] debugId={} status={} errorCode={} message={}",

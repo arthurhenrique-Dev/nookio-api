@@ -7,7 +7,7 @@ import com.henrique.nookio_api.modules.schedules.dto.ReserveScheduleDto;
 import com.henrique.nookio_api.modules.schedules.models.Schedule;
 import com.henrique.nookio_api.modules.schedules.models.ScheduleStatus;
 import com.henrique.nookio_api.modules.schedules.repository.ScheduleRepository;
-import com.henrique.nookio_api.modules.schedules.services.orchestror.ReserveFacade;
+import com.henrique.nookio_api.modules.schedules.services.orchestror.ReserveOrchestror;
 import com.henrique.nookio_api.shared.logging.LogContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,14 +24,14 @@ import java.util.List;
 public class SchedulesService {
 
     private final ScheduleRepository repository;
-    private final ReserveFacade reserveFacade;
+    private final ReserveOrchestror reserveOrchestror;
     private final PaymentsPort paymentsPort;
 
     public void reserve(ReserveScheduleDto dto) {
         String debugId = LogContext.getDebugId();
         log.info("[RESERVE_SCHEDULE_STARTED] debugId={} propertyId={}", debugId, dto.propertyId());
         try {
-            reserveFacade.execute(dto);
+            reserveOrchestror.execute(dto);
             log.info("[RESERVE_SCHEDULE_SUCCESS] debugId={} propertyId={}", debugId, dto.propertyId());
         } finally {
             LogContext.clear();

@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ReserveFacade {
+public class ReserveOrchestror {
 
     private final UserRepository userRepository;
     private final ReserveScheduleService reserveSerice;
