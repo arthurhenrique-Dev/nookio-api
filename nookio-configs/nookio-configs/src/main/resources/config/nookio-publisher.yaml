@@ -1,4 +1,8 @@
 spring:
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
   datasource:
     url: jdbc:sqlite:publisher.db
     driver-class-name: org.sqlite.JDBC
@@ -19,3 +23,21 @@ server:
 aws:
   ses:
     region: ${AWS_REGION}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        permittedNumberOfCallsInHalfOpenState: 3
+        recordExceptions:
+          - feign.FeignException.FeignServerException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+    instances:
+      nookio-analytics-api:
+        baseConfig: default
+        failureRateThreshold: 50

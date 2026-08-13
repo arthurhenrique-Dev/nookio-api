@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Map;
 
-@FeignClient(name = "NOOKIO-API")
+@FeignClient(name = "nookio-api")
 public interface NookioApiFeignClient {
 
     @PostMapping("/payments/webhook")

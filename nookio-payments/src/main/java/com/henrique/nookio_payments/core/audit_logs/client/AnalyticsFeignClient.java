@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Map;
 
-@FeignClient(name = "NOOKIO-ANALYTICS-API")
+@FeignClient(name = "nookio-analytics-api")
 public interface AnalyticsFeignClient {
 
     @PostMapping("/audit_logs")
