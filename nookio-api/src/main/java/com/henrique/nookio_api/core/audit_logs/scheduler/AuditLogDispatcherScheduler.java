@@ -2,7 +2,7 @@ package com.henrique.nookio_api.core.audit_logs.scheduler;
 
 import com.henrique.nookio_api.core.audit_logs.model.AuditLogEntity;
 import com.henrique.nookio_api.core.audit_logs.repository.AuditLogFallbackRepository;
-import com.henrique.nookio_api.core.audit_logs.service.StompAuditLogPublisher;
+import com.henrique.nookio_api.core.audit_logs.service.KafkaAuditLogPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,7 +17,7 @@ import java.util.List;
 public class AuditLogDispatcherScheduler {
 
     private final AuditLogFallbackRepository fallbackRepository;
-    private final StompAuditLogPublisher stompPublisher;
+    private final KafkaAuditLogPublisher kafkaPublisher;
 
     @Scheduled(fixedDelay = 300000) // Runs every 5 minutes (300,000 ms)
     @Transactional
@@ -27,15 +27,15 @@ public class AuditLogDispatcherScheduler {
             return;
         }
 
-        log.info("[DISPATCHER_SCHEDULER] Found {} pending local audit logs to dispatch.", pendingLogs.size());
+        log.info("[DISPATCHER_SCHEDULER] Found {} pending local audit logs to dispatch to Kafka.", pendingLogs.size());
         for (AuditLogEntity entity : pendingLogs) {
             try {
-                stompPublisher.sendAuditLog(entity.getAuditLogData());
+                kafkaPublisher.sendAuditLog(entity.getAuditLogData());
                 fallbackRepository.delete(entity);
                 log.info("[DISPATCHER_SUCCESS] Dispatched local audit log ID: {}", entity.getId());
             } catch (Exception e) {
                 log.error("[DISPATCHER_FAILED] Failed to dispatch local audit log ID: {}. Will retry in 5 minutes.", entity.getId(), e);
-                break; // Stop loop if connection is still down
+                break; // Stop loop if Kafka is unreachable
             }
         }
     }

@@ -17,7 +17,7 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class StompAuditLogPublisher {
+public class KafkaAuditLogPublisher {
 
     private final AuditLogFallbackRepository fallbackRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -25,7 +25,7 @@ public class StompAuditLogPublisher {
     @Value("${clients.api-id:1}")
     private Integer apiId;
 
-    @CircuitBreaker(name = "analyticsStompService", fallbackMethod = "fallbackSaveLocal")
+    @CircuitBreaker(name = "analyticsService", fallbackMethod = "fallbackSaveLocal")
     public void sendAuditLog(AuditLogData data) {
         try {
             Map<String, Object> logItem = new HashMap<>();
@@ -40,16 +40,15 @@ public class StompAuditLogPublisher {
             payload.put("logs", List.of(logItem));
 
             kafkaTemplate.send(KafkaConfig.AUDIT_LOGS_TOPIC, payload);
-            log.info("[KAFKA_SENT_SUCCESS] Audit log sent to topic {}", KafkaConfig.AUDIT_LOGS_TOPIC);
+            log.info("[KAFKA_AUDIT_LOG_SENT] Sent audit log to Kafka topic {}", KafkaConfig.AUDIT_LOGS_TOPIC);
         } catch (Exception e) {
-            log.error("[KAFKA_SEND_FAILED] Failed to send audit log via Kafka", e);
+            log.error("[KAFKA_AUDIT_LOG_FAILED] Failed to send audit log via Kafka", e);
             throw new RuntimeException("Kafka send failure", e);
         }
     }
 
     public void fallbackSaveLocal(AuditLogData data, Throwable t) {
-        log.warn("[STOMP_FALLBACK_TRIGGERED] Circuit Breaker OPEN or WebSocket failure. Saving log to management.local_logs DB table");
-        disconnectSession();
+        log.warn("[KAFKA_FALLBACK_TRIGGERED] Saving log locally to DB table. Error: {}", t.getMessage());
         try {
             if (data.getTimestamp() == null) {
                 data.setTimestamp(LocalDateTime.now());
@@ -59,18 +58,7 @@ public class StompAuditLogPublisher {
                     .build();
             fallbackRepository.save(entity);
         } catch (Exception ex) {
-            log.error("[STOMP_FALLBACK_ERROR] Failed to save local audit log to DB", ex);
-        }
-    }
-
-    public synchronized void disconnectSession() {
-        if (session != null) {
-            try {
-                session.disconnect();
-            } catch (Exception e) {
-                log.debug("Session disconnect exception", e);
-            }
-            session = null;
+            log.error("[KAFKA_FALLBACK_ERROR] Failed to save local audit log to DB", ex);
         }
     }
 }
