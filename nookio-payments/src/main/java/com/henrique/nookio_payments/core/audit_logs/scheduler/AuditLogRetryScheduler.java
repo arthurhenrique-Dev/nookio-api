@@ -1,10 +1,11 @@
 package com.henrique.nookio_payments.core.audit_logs.scheduler;
 
-import com.henrique.nookio_payments.core.audit_logs.client.AnalyticsFeignClient;
+import com.henrique.nookio_payments.config.RabbitMQConfig;
 import com.henrique.nookio_payments.core.audit_logs.model.AuditLogFallback;
 import com.henrique.nookio_payments.core.audit_logs.repository.AuditLogFallbackRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -18,7 +19,7 @@ import java.util.Map;
 public class AuditLogRetryScheduler {
 
     private final AuditLogFallbackRepository fallbackRepository;
-    private final AnalyticsFeignClient analyticsFeignClient;
+    private final RabbitTemplate rabbitTemplate;
 
     @Value("${clients.api-id:3}")
     private Integer apiId;
@@ -41,7 +42,7 @@ public class AuditLogRetryScheduler {
                 .toList();
 
         try {
-            analyticsFeignClient.sendAuditLogs(Map.of(
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.AUDIT_LOGS_ROUTING_KEY, Map.of(
                     "api_id", apiId,
                     "logs", payloadLogs
             ));

@@ -7,4 +7,4 @@ spring:
     import: "configserver:http://localhost:8888"
 
 clients:
-  api-id: nookio-analytics-api
+  api-id: 2

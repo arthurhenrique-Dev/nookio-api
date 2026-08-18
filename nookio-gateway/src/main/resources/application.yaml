@@ -5,6 +5,3 @@ spring:
     active: dev
   config:
     import: "configserver:http://localhost:8888"
-
-clients:
-  api-id: nookio-gateway
