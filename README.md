@@ -1,5 +1,7 @@
 # Nookio Microservices Architecture 🚀
 
+[🇺🇸 English](README.md) | [🇧🇷 Português](README_PT.md)
+
 A high-scale, resilient, event-driven microservices architecture built for real estate property search, bookings, and payments.
 
 ---
