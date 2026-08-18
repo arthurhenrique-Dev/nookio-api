@@ -1,12 +1,12 @@
 package com.henrique.nookio_publisher.core.audit_logs.scheduler;
 
-import com.henrique.nookio_publisher.config.RabbitMQConfig;
+import com.henrique.nookio_publisher.config.KafkaConfig;
 import com.henrique.nookio_publisher.core.audit_logs.model.AuditLogFallback;
 import com.henrique.nookio_publisher.core.audit_logs.repository.AuditLogFallbackRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +19,7 @@ import java.util.Map;
 public class AuditLogRetryScheduler {
 
     private final AuditLogFallbackRepository fallbackRepository;
-    private final RabbitTemplate rabbitTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Value("${clients.api-id:2}")
     private Integer apiId;
@@ -42,7 +42,7 @@ public class AuditLogRetryScheduler {
                 .toList();
 
         try {
-            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.AUDIT_LOGS_ROUTING_KEY, Map.of(
+            kafkaTemplate.send(KafkaConfig.AUDIT_LOGS_TOPIC, Map.of(
                     "api_id", apiId,
                     "logs", payloadLogs
             ));

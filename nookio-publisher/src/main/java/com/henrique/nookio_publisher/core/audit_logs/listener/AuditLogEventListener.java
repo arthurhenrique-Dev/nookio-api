@@ -1,13 +1,13 @@
 package com.henrique.nookio_publisher.core.audit_logs.listener;
 
-import com.henrique.nookio_publisher.config.RabbitMQConfig;
+import com.henrique.nookio_publisher.config.KafkaConfig;
 import com.henrique.nookio_publisher.core.audit_logs.event.AuditLogEvent;
 import com.henrique.nookio_publisher.core.audit_logs.model.AuditLogFallback;
 import com.henrique.nookio_publisher.core.audit_logs.repository.AuditLogFallbackRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -21,7 +21,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuditLogEventListener {
 
-    private final RabbitTemplate rabbitTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final AuditLogFallbackRepository fallbackRepository;
 
     @Value("${clients.api-id:2}")
@@ -41,7 +41,7 @@ public class AuditLogEventListener {
         );
 
         try {
-            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.AUDIT_LOGS_ROUTING_KEY, Map.of(
+            kafkaTemplate.send(KafkaConfig.AUDIT_LOGS_TOPIC, Map.of(
                     "api_id", apiId,
                     "logs", List.of(logItem)
             ));

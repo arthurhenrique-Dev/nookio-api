@@ -3,12 +3,12 @@ package com.henrique.nookio_api.core.audit_logs.service;
 import com.henrique.nookio_api.core.audit_logs.model.AuditLogData;
 import com.henrique.nookio_api.core.audit_logs.model.AuditLogEntity;
 import com.henrique.nookio_api.core.audit_logs.repository.AuditLogFallbackRepository;
-import com.henrique.nookio_api.infraestructure.messaging.RabbitMQConfig;
+import com.henrique.nookio_api.infraestructure.messaging.KafkaConfig;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,7 +20,7 @@ import java.util.*;
 public class StompAuditLogPublisher {
 
     private final AuditLogFallbackRepository fallbackRepository;
-    private final RabbitTemplate rabbitTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Value("${clients.api-id:1}")
     private Integer apiId;
@@ -39,11 +39,11 @@ public class StompAuditLogPublisher {
             payload.put("api_id", apiId);
             payload.put("logs", List.of(logItem));
 
-            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.AUDIT_LOGS_ROUTING_KEY, payload);
-            log.info("[RABBITMQ_SENT_SUCCESS] Audit log sent to exchange {} routing key {}", RabbitMQConfig.EXCHANGE, RabbitMQConfig.AUDIT_LOGS_ROUTING_KEY);
+            kafkaTemplate.send(KafkaConfig.AUDIT_LOGS_TOPIC, payload);
+            log.info("[KAFKA_SENT_SUCCESS] Audit log sent to topic {}", KafkaConfig.AUDIT_LOGS_TOPIC);
         } catch (Exception e) {
-            log.error("[RABBITMQ_SEND_FAILED] Failed to send audit log via RabbitMQ", e);
-            throw new RuntimeException("RabbitMQ send failure", e);
+            log.error("[KAFKA_SEND_FAILED] Failed to send audit log via Kafka", e);
+            throw new RuntimeException("Kafka send failure", e);
         }
     }
 
