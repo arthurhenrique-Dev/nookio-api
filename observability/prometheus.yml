@@ -1,0 +1,39 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'nookio-api'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['nookio-api:8080']
+
+  - job_name: 'nookio-auth'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['nookio-auth:8081']
+
+  - job_name: 'nookio-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['nookio-gateway:8080']
+
+  - job_name: 'nookio-analytics-api'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['nookio-analytics-api:8082']
+
+  - job_name: 'nookio-payments'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['nookio-payments:8084']
+
+  - job_name: 'nookio-publisher'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['nookio-publisher:8086']
+
+  - job_name: 'nookio-configs'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['nookio-configs:8888']
