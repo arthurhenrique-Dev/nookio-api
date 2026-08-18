@@ -10,9 +10,20 @@ spring:
             readTimeout: 3000
 
   datasource:
-    url: jdbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE}_${ENVIRONMENT}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    write:
+      url: jdbc:postgresql://${DB_WRITE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE:nookio_db}_${ENVIRONMENT:dev}
+      username: ${DATABASE_USERNAME:postgres}
+      password: ${DATABASE_PASSWORD:postgres}
+      hikari:
+        maximum-pool-size: 30
+        minimum-idle: 10
+    read:
+      url: jdbc:postgresql://${DB_READ_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE:nookio_db}_${ENVIRONMENT:dev}
+      username: ${DATABASE_USERNAME:postgres}
+      password: ${DATABASE_PASSWORD:postgres}
+      hikari:
+        maximum-pool-size: 30
+        minimum-idle: 10
   data:
     redis:
       host: ${REDIS_HOST}
