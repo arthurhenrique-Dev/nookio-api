@@ -1,0 +1,45 @@
+spring:
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+  datasource:
+    url: jdbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/nookio_publisher_${ENVIRONMENT}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+
+server:
+  port: ${PORT}
+
+aws:
+  ses:
+    region: ${AWS_REGION}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        permittedNumberOfCallsInHalfOpenState: 3
+        recordExceptions:
+          - feign.FeignException.FeignServerException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+    instances:
+      nookio-analytics-api:
+        baseConfig: default
+        failureRateThreshold: 50
+      analyticsStompService:
+        baseConfig: default
+        failureRateThreshold: 50
+      emailService:
+        baseConfig: default
+        failureRateThreshold: 50

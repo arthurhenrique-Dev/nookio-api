@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: nookio-payments
+  profiles:
+    active: dev
+  config:
+    import: "configserver:http://localhost:8888"
+
+clients:
+  api-id: 3

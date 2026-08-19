@@ -1,0 +1,2 @@
+ALTER TABLE users.users
+    ADD COLUMN cpf VARCHAR(11) UNIQUE;

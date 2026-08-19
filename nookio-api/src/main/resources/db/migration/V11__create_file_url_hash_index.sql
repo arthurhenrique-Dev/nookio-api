@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS ix_files_url ON files.files USING HASH (url)
