@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nookio-configmap
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  DB_HOST: "postgres-primary-service"
+  DB_WRITE_HOST: "postgres-primary-service"
+  DB_READ_HOST: "postgres-replica-service"
+  DB_PORT: "5432"
+  DB_NAME: "nookio_db"
+  REDIS_HOST: "redis-service"
+  KAFKA_HOST: "kafka-service:9092"
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://nookio-discovery-service:8761/eureka/"
