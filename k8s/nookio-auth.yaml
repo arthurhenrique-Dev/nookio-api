@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nookio-auth-deployment
+  labels:
+    app: nookio-auth
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nookio-auth
+  template:
+    metadata:
+      labels:
+        app: nookio-auth
+    spec:
+      containers:
+        - name: nookio-auth
+          image: nookio-auth:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+          envFrom:
+            - configMapRef:
+                name: nookio-configmap
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nookio-auth-service
+spec:
+  type: ClusterIP
+  selector:
+    app: nookio-auth
+  ports:
+    - port: 8081
+      targetPort: 8081

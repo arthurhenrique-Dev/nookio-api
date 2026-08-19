@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nookio-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - nookio-auth
+      - nookio-gateway
+    networks:
+      - nookio-network
+
+  nookio-auth:
+    build:
+      context: ./nookio-auth
+      dockerfile: Dockerfile
+    container_name: nookio-auth
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=nookio_auth_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_HOST=redis
+      - KAFKA_HOST=kafka:9092
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    networks:
+      - nookio-network
+
+  nookio-gateway:
+    build:
+      context: ./nookio-gateway
+      dockerfile: Dockerfile
+    container_name: nookio-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - nookio-network
+
+  prometheus:
+    image: prom/prometheus:v2.50.1
+    container_name: nookio-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - nookio-network
+
+  grafana:
+    image: grafana/grafana:10.3.3
+    container_name: nookio-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - nookio-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: nookio-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: nookio_auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - nookio-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: nookio-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - nookio-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: nookio-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - nookio-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: nookio-kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - nookio-network
+
+networks:
+  nookio-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
